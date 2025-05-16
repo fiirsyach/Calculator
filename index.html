@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kalkulator Modern</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+
+  body {
+    margin: 0;
+    background: #282c34;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .calculator {
+    background: #1e2228;
+    padding: 25px 20px 30px 20px;
+    border-radius: 15px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    width: 320px;
+  }
+
+  .display {
+    background: #282c34;
+    color: #61dafb;
+    font-size: 2.5rem;
+    padding: 20px 15px;
+    text-align: right;
+    border-radius: 12px;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.6);
+    margin-bottom: 20px;
+    user-select: none;
+    min-height: 60px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 15px;
+  }
+
+  button {
+    background: #444a5a;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    color: #eee;
+    padding: 18px 0;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #2b2f3a;
+    transition: background-color 0.2s ease, box-shadow 0.1s ease;
+    user-select: none;
+  }
+
+  button:active {
+    box-shadow: 0 2px 0 #2b2f3a;
+    background-color: #5a6180;
+  }
+
+  button.operator {
+    background: #61dafb;
+    color: #1a1a1a;
+    font-weight: 700;
+    box-shadow: 0 5px 0 #3bb0f5;
+  }
+
+  button.operator:active {
+    background-color: #3bb0f5;
+  }
+
+  button.equal {
+    background: #21bf73;
+    color: white;
+    grid-column: span 2;
+    font-weight: 700;
+    box-shadow: 0 5px 0 #1a9254;
+  }
+
+  button.equal:active {
+    background-color: #1a9254;
+  }
+
+  button.clear {
+    background: #f44336;
+    color: white;
+    grid-column: span 2;
+    font-weight: 700;
+    box-shadow: 0 5px 0 #aa2e25;
+  }
+
+  button.clear:active {
+    background-color: #aa2e25;
+  }
+
+  @media (max-width: 360px) {
+    .calculator {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      padding: 30px 15px;
+      box-shadow: none;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="calculator" role="application" aria-label="Kalkulator modern">
+    <div class="display" id="display" aria-live="polite" aria-atomic="true">0</div>
+    <div class="buttons">
+      <button class="clear" aria-label="Clear" id="clear">AC</button>
+      <button aria-label="Buka kurung" disabled>(</button>
+      <button aria-label="Tutup kurung" disabled>)</button>
+      <button class="operator" data-op="/" aria-label="Bagi">÷</button>
+
+      <button data-num="7" aria-label="7">7</button>
+      <button data-num="8" aria-label="8">8</button>
+      <button data-num="9" aria-label="9">9</button>
+      <button class="operator" data-op="*" aria-label="Kali">×</button>
+
+      <button data-num="4" aria-label="4">4</button>
+      <button data-num="5" aria-label="5">5</button>
+      <button data-num="6" aria-label="6">6</button>
+      <button class="operator" data-op="-" aria-label="Kurang">−</button>
+
+      <button data-num="1" aria-label="1">1</button>
+      <button data-num="2" aria-label="2">2</button>
+      <button data-num="3" aria-label="3">3</button>
+      <button class="operator" data-op="+" aria-label="Tambah">+</button>
+
+      <button data-num="0" style="grid-column: span 2" aria-label="0">0</button>
+      <button data-num="." aria-label="Titik desimal">.</button>
+      <button class="equal" id="equal" aria-label="Sama dengan">=</button>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const display = document.getElementById('display');
+      const clearButton = document.getElementById('clear');
+      const equalButton = document.getElementById('equal');
+      const buttons = document.querySelectorAll('button[data-num], button.operator');
+
+      let currentInput = '';
+      let evaluated = false;
+
+      // Update display safely with expression or result
+      function updateDisplay(value) {
+        display.textContent = value || '0';
+      }
+
+      // Append a character to the input, handle multiple operators and decimals
+      function appendToInput(char) {
+        if(evaluated) {
+          // If last operation was evaluated, start fresh if number or dot, otherwise append if operator
+          if(/[0-9.]/.test(char)) {
+            currentInput = char === '.' ? '0.' : char;
+          } else {
+            currentInput += char;
+          }
+          evaluated = false;
+        } else {
+          // Prevent multiple dots in a number segment
+          if(char === '.') {
+            // Find last number segment
+            const parts = currentInput.split(/[\+\-\*\/]/);
+            const last = parts[parts.length -1];
+            if(last.includes('.')) {
+              return; // Ignore extra dot
+            }
+            if(currentInput === '' || /[\+\-\*\/]$/.test(currentInput)) {
+              char = '0.';
+            }
+          }
+          currentInput += char;
+        }
+        updateDisplay(currentInput);
+      }
+
+      // Clear all
+      clearButton.addEventListener('click', () => {
+        currentInput = '';
+        evaluated = false;
+        updateDisplay('0');
+      });
+
+      // Handle number and operator buttons
+      buttons.forEach(button => {
+        button.addEventListener('click', () => {
+          if(button.hasAttribute('data-num')) {
+            appendToInput(button.getAttribute('data-num'));
+          } else if(button.classList.contains('operator')) {
+            // Prevent multiple operator in a row
+            if(currentInput === '') {
+              if(button.getAttribute('data-op') === '-') {
+                // Allow starting with minus sign for negative number
+                appendToInput('-');
+              }
+              return;
+            }
+            if(/[+\-*/]$/.test(currentInput)) {
+              // Replace last operator with new operator
+              currentInput = currentInput.slice(0, -1) + button.getAttribute('data-op');
+            } else {
+              appendToInput(button.getAttribute('data-op'));
+            }
+            evaluated = false;
+            updateDisplay(currentInput);
+          }
+        });
+      });
+
+      // Evaluate expression safely
+      equalButton.addEventListener('click', () => {
+        try {
+          if(currentInput === '') return;
+          if(/[+\-*/.]$/.test(currentInput)) {
+            // Remove trailing operator/dot before eval
+            currentInput = currentInput.slice(0, -1);
+          }
+          // Evaluate using Function constructor - a safer alternative to eval
+          // Remove any invalid chars for safety, only digits and operators allowed
+          if (/^[0-9+\-*/. ]+$/.test(currentInput)) {
+            const result = new Function('return ' + currentInput)();
+            updateDisplay(result);
+            currentInput = String(result);
+            evaluated = true;
+          } else {
+            updateDisplay('Error');
+            currentInput = '';
+          }
+        } catch(e) {
+          updateDisplay('Error');
+          currentInput = '';
+        }
+      });
+
+      // Initialize
+      updateDisplay('0');
+    })();
+  </script>
+</body>
+</html>
+
